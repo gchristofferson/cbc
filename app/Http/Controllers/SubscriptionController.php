@@ -235,9 +235,11 @@ class SubscriptionController extends Controller
 
             $cart_data['id'] = request()->state;
             $cart_data['cart_state'] = $cart_state;
+//            return $this_start_date;
             $t = strtotime($this_start_date);
             $t = date("m-d-Y", $t);
             $cart_data['this_start_date'] = $t;
+//            return $cart_data['this_start_date'];
             $cart_data['this_state_discount'] = $this_state_discount;
             $t = strtotime($this_expire_date);
             $t = date("m-d-Y", $t);

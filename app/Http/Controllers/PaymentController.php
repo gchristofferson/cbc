@@ -12,6 +12,7 @@ use PayPal\Api\Item;
 use PayPal\Api\ItemList;
 use PayPal\Api\Payer;
 use PayPal\Api\Payment;
+use function PHPSTORM_META\type;
 use Redirect;
 use PayPal\Api\RedirectUrls;
 use PayPal\Api\Transaction;
@@ -135,6 +136,7 @@ class PaymentController extends Controller
         $result = $payment->execute($execution, $this->_api_context);
 
         if ($result->getState() == 'approved') {
+//            return "Approved";
 
             \Session::put('success', 'Payment success');
 
@@ -163,6 +165,13 @@ class PaymentController extends Controller
                 $subscription->subscription_start_date = strtotime($cart_data['this_start_date']);
                 $subscription->subscription_expire_date = strtotime($cart_data['this_expire_date']);
                 $subscription->paid = true;
+                
+                if (strtotime($cart_data['this_start_date']) == false) {
+                    $subscription->subscription_start_date = strtotime(now()->toDateTimeString());
+                }
+                if (strtotime($cart_data['this_expire_date']) == false) {
+                    $subscription->subscription_expire_date = strtotime(str_replace('-', '/', $cart_data['this_expire_date']));
+                }
                 $subscription->save();
             }
 

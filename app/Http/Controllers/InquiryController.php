@@ -437,7 +437,7 @@ class InquiryController extends Controller
 
 
         // get documents
-        $attachments = $inquiry[0]->documents();
+        $attachments = $inquiry->documents()->get();
         $data['attachments'] = $attachments;
 
         foreach ($attachments as $attachment) {

@@ -86,6 +86,7 @@ class ContentsController extends Controller
         $cart_state = '';
         $msg = '';
         $success_msg = '';
+        $match = false;
 
 
 
@@ -156,6 +157,7 @@ class ContentsController extends Controller
             $oldest_subscription = sizeof($matching_subscriptions) - 1;
             if ($oldest_subscription >= 0) {
                 $this_start_date =  $matching_subscriptions[$oldest_subscription]->subscription_expire_date->addDays(1)->toDateTimeString();
+                $match = true;
             } else {
                 $this_start_date = now()->toDateTimeString();
             }
@@ -219,21 +221,33 @@ class ContentsController extends Controller
 
                     // discount use is less than limit
                     if ($used < $limit && $this_state_discount == 'on' ) {
-                        $this_expire_date = now()->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
+                        if ($match == true) {
+                            $this_expire_date = $this_start_date->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
+                        } else {
+                            $this_expire_date = now()->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
+                        }
                         $this_used = 1;
                         $this_discount_amount = $this_state_discount->discount;
                         $this_discount_desc = $this_state_discount->discount_desc;
                         $this_price = $cart_state->price - $this_discount_amount;
                         $success_msg = "Discount applied!";
                     } else if ($used < $limit) {
-                        $this_expire_date = now()->addDays(365)->toDateTimeString();
+                        if ($match == true) {
+                            $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
+                        } else {
+                            $this_expire_date = now()->addDays(365)->toDateTimeString();
+                        }
                         $this_used = 1;
                         $this_discount_amount = $this_state_discount->discount;
                         $this_discount_desc = $this_state_discount->discount_desc;
                         $this_price = $cart_state->price - $this_discount_amount;
                         $success_msg = "Discount applied!";
                     } else {
-                        $this_expire_date = now()->addDays(365)->toDateTimeString();
+                        if ($match == true) {
+                            $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
+                        } else {
+                            $this_expire_date = now()->addDays(365)->toDateTimeString();
+                        }
                         $this_used = $used;
                         $success_msg = "Sorry, you've already used your limit of this discount";
                     }
@@ -241,7 +255,11 @@ class ContentsController extends Controller
                 // otherwise, apply based on whether expire date is overridden
                 else {
                     if ($this_state_discount == 'on') {
-                        $this_expire_date = now()->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
+                        if ($match == true) {
+                            $this_expire_date = $this_start_date->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
+                        } else {
+                            $this_expire_date = now()->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
+                        }
                         $this_used = 1;
                         $this_discount_amount = $this_state_discount->discount;
                         $this_discount_desc = $this_state_discount->discount_desc;
@@ -249,7 +267,11 @@ class ContentsController extends Controller
                         $success_msg = "Discount applied!";
                     }
                     else {
-                        $this_expire_date = now()->addDays(365)->toDateTimeString();
+                        if ($match == true) {
+                            $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
+                        } else {
+                            $this_expire_date = now()->addDays(365)->toDateTimeString();
+                        }
                         $this_used = 1;
                         $this_discount_amount = $this_state_discount->discount;
                         $this_discount_desc = $this_state_discount->discount_desc;
@@ -259,7 +281,11 @@ class ContentsController extends Controller
                 }
                 // otherwise promo code is empty or invalid
             } else {
-                $this_expire_date = now()->addDays(365)->toDateTimeString();
+                if ($match == true) {
+                    $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
+                } else {
+                    $this_expire_date = now()->addDays(365)->toDateTimeString();
+                }
                 if (strlen($promo_code) > 0) {
                     $msg = 'Sorry, the code you entered is invalid';
                 }

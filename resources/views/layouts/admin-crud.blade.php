@@ -156,8 +156,11 @@
                                 <a class="dropdown-item" href="/update-profile">
                                     <i class="material-icons">&#xE8B8;</i> Edit Profile</a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-danger" href="#">
-                                    <i class="material-icons text-danger">&#xE879;</i> Logout </a>
+                                <form method="POST" action="/logout">
+                                    @csrf
+                                    <button class="dropdown-item text-danger" type="submit">
+                                        <i class="material-icons text-danger">&#xE879;</i> Logout </button>
+                                </form>
                             </div>
                         </li>
                     </ul>
