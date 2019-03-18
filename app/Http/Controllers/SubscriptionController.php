@@ -195,10 +195,11 @@ class SubscriptionController extends Controller
                     // discount use is less than limit
                     if ($used < $limit && $this_state_discount == 'on' ) {
                         if ($match == true) {
-                            return '1';
-                            $this_expire_date = $this_start_date->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
+                            $this_start_date = date(strtotime($this_start_date. " + $this_state_discount->days_to_expire_discount days"));
+                            $this_start_date = gmdate("Y-m-d\TH:i:s\Z", $this_start_date);
+                            $this_expire_date = $this_start_date;
+//                            $this_expire_date = $this_start_date->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
                         } else {
-                            return '2';
                             $this_expire_date = now()->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
                         }
                         $this_used = 1;
@@ -208,10 +209,11 @@ class SubscriptionController extends Controller
                         session()->flash('success', 'Discount applied!');
                     } else if ($used < $limit) {
                         if ($match == true) {
-                            return '3';
-                            $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
+                            $this_start_date = date(strtotime($this_start_date. ' + 365 days'));
+                            $this_start_date = gmdate("Y-m-d\TH:i:s\Z", $this_start_date);
+                            $this_expire_date = $this_start_date;
+//                            $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
                         } else {
-                            return '4';
                             $this_expire_date = now()->addDays(365)->toDateTimeString();
                         }
                         $this_used = 1;
@@ -221,10 +223,11 @@ class SubscriptionController extends Controller
                         session()->flash('success', 'Discount applied!');
                     } else {
                         if ($match == true) {
-                            return '5';
-                            $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
+                            $this_start_date = date(strtotime($this_start_date. ' + 365 days'));
+                            $this_start_date = gmdate("Y-m-d\TH:i:s\Z", $this_start_date);
+                            $this_expire_date = $this_start_date;
+//                            $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
                         } else {
-                            return '6';
                             $this_expire_date = now()->addDays(365)->toDateTimeString();
                         }
                         $this_used = $used;
@@ -235,10 +238,11 @@ class SubscriptionController extends Controller
                 else {
                     if ($this_state_discount == 'on') {
                         if ($match == true) {
-                            return '7';
-                            $this_expire_date = $this_start_date->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
+                            $this_start_date = date(strtotime($this_start_date. " + $this_state_discount->days_to_expire_discount days"));
+                            $this_start_date = gmdate("Y-m-d\TH:i:s\Z", $this_start_date);
+                            $this_expire_date = $this_start_date;
+//                            $this_expire_date = $this_start_date->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
                         } else {
-                            return '8';
                             $this_expire_date = now()->addDays($this_state_discount->days_to_expire_discount)->toDateTimeString();
                         }
                         $this_used = 1;
@@ -249,10 +253,11 @@ class SubscriptionController extends Controller
                     }
                     else {
                         if ($match == true) {
-                            return '9';
-                            $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
+                            $this_start_date = date(strtotime($this_start_date. ' + 365 days'));
+                            $this_start_date = gmdate("Y-m-d\TH:i:s\Z", $this_start_date);
+                            $this_expire_date = $this_start_date;
+//                            $this_expire_date = $this_start_date->addDays(365)->toDateTimeString();
                         } else {
-                            return '10';
                             $this_expire_date = now()->addDays(365)->toDateTimeString();
                         }
                         $this_used = 1;
@@ -265,16 +270,10 @@ class SubscriptionController extends Controller
                 // otherwise promo code is empty or invalid
             } else {
                 if ($match == true) {
-//                    return '11';
-//                  return $this_start_date;
                     $this_start_date = date(strtotime($this_start_date. ' + 365 days'));
-//                    return $this_start_date;
                     $this_start_date = gmdate("Y-m-d\TH:i:s\Z", $this_start_date);
-//                    return now();
-//                    return $this_start_date;
                     $this_expire_date = $this_start_date;
                 } else {
-                    return '12';
                     $this_expire_date = now()->addDays(365)->toDateTimeString();
                 }
                 if (strlen($promo_code) > 0) {
