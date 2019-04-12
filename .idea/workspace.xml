@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2d6ef2a9-637b-48d1-951c-4344177004d6" name="Default Changelist" comment="">
+<<<<<<< HEAD
       <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
@@ -416,6 +417,9 @@
       <change beforePath="$PROJECT_DIR$/vendor/swiftmailer/swiftmailer/lib/swiftmailer_generate_mimes_config.php" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/swiftmailer/swiftmailer/lib/swiftmailer_generate_mimes_config.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vendor/symfony/var-dumper/Resources/bin/var-dump-server" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/symfony/var-dumper/Resources/bin/var-dump-server" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vendor/zendframework/zend-diactoros/doc/book/index.md" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/zendframework/zend-diactoros/doc/book/index.md" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/../../Homestead.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/../../Homestead.yaml" afterDir="false" />
+>>>>>>> fda667efdcf2fd358615475c7e8840fd37d1ce3c
     </list>
     <ignored path="$USER_HOME$/vendor/beyondcode/laravel-dump-server/" />
     <ignored path="$USER_HOME$/vendor/composer/" />
@@ -939,23 +943,34 @@
       <option name="presentableId" value="Default" />
       <updated>1552089447789</updated>
       <workItem from="1552089456850" duration="14592000" />
+<<<<<<< HEAD
       <workItem from="1552509627795" duration="11405000" />
       <workItem from="1554939306952" duration="33000" />
       <workItem from="1554939344178" duration="47000" />
       <workItem from="1554939397618" duration="54000" />
       <workItem from="1554939454214" duration="8000" />
       <workItem from="1554939463152" duration="18900000" />
+=======
+      <workItem from="1552509627795" duration="12406000" />
+>>>>>>> fda667efdcf2fd358615475c7e8840fd37d1ce3c
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
+<<<<<<< HEAD
     <option name="totallyTimeSpent" value="45039000" />
+=======
+    <option name="totallyTimeSpent" value="26998000" />
+>>>>>>> fda667efdcf2fd358615475c7e8840fd37d1ce3c
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
     <layout>
+<<<<<<< HEAD
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.22014925" />
+=======
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.34168443" />
+>>>>>>> fda667efdcf2fd358615475c7e8840fd37d1ce3c
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="npm" order="2" side_tool="true" />
       <window_info id="Favorites" order="3" side_tool="true" />
@@ -972,7 +987,11 @@
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
+<<<<<<< HEAD
       <window_info active="true" anchor="bottom" id="Terminal" order="11" visible="true" weight="0.32925472" />
+=======
+      <window_info active="true" anchor="bottom" id="Terminal" order="11" visible="true" weight="0.32936078" />
+>>>>>>> fda667efdcf2fd358615475c7e8840fd37d1ce3c
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
