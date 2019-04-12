@@ -6,6 +6,7 @@ use App\User;
 use foo\bar;
 use Illuminate\Http\Request;
 use function PHPSTORM_META\elementType;
+use App\Received;
 
 class UserController extends Controller
 {
@@ -50,22 +51,9 @@ class UserController extends Controller
         }
 //        return $received_inquiry_ids;
 
-        // for each id, get the corresponding inquiry
-        $received_inquiries = [];
-        foreach ($received_inquiry_ids as $received_inquiry_id) {
-            $inquiry = \App\Inquiry::take(1)->where('id', $received_inquiry_id['inquiry_id'])->get();
 
-            $inquiry['read'] = $received_inquiry_id['read'];
-            foreach ($received_inquiry_rows as $row) {
-                if ($row->inquiry_id == $received_inquiry_id['inquiry_id']) {
-                    $inquiry['received_id'] = $row->id;
-                }
 
-            }
-            array_push($received_inquiries, $inquiry);
-        }
-
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
         if (auth()->user()->admin == 'on' || auth()->user()->super_admin == 'on') {
             return view('users.index-list', $data);
@@ -131,7 +119,7 @@ class UserController extends Controller
             array_push($received_inquiries, $inquiry);
         }
 
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
         if (auth()->user()->admin == 'on' || auth()->user()->super_admin == 'on') {
             return view('users.new.index', $data);
@@ -197,7 +185,7 @@ class UserController extends Controller
             array_push($received_inquiries, $inquiry);
         }
 
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
         if (auth()->user()->admin == 'on' || auth()->user()->super_admin == 'on') {
             return view('users.rejected.index', $data);
@@ -324,7 +312,7 @@ class UserController extends Controller
             array_push($received_inquiries, $inquiry);
         }
 
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
         if (auth()->user()->admin == 'on' || auth()->user()->super_admin == 'on') {
 

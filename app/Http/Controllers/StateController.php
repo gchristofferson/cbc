@@ -7,6 +7,7 @@ use App\State;
 use foo\bar;
 use http\Exception\BadConversionException;
 use Illuminate\Http\Request;
+use App\Received;
 
 class StateController extends Controller
 {
@@ -46,22 +47,7 @@ class StateController extends Controller
         }
 //        return $received_inquiry_ids;
 
-        // for each id, get the corresponding inquiry
-        $received_inquiries = [];
-        foreach($received_inquiry_ids as $received_inquiry_id) {
-            $inquiry = \App\Inquiry::take(1)->where('id', $received_inquiry_id['inquiry_id'])->get();
-
-            $inquiry['read'] = $received_inquiry_id['read'];
-            foreach ($received_inquiry_rows as $row) {
-                if ($row->inquiry_id == $received_inquiry_id['inquiry_id']) {
-                    $inquiry['received_id'] = $row->id;
-                }
-
-            }
-            array_push($received_inquiries, $inquiry);
-        }
-
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
         $inquiries = Inquiry::orderBy('created_at', 'DESC')->paginate(10);
         $data['inquiries'] = $inquiries;
@@ -160,7 +146,7 @@ class StateController extends Controller
             array_push($received_inquiries, $inquiry);
         }
 
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
         if (auth()->user()->admin == 'on' || auth()->user()->super_admin == 'on') {
             return view('states.show', $data);

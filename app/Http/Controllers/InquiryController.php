@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Inquiry;
 use App\Mail\NewInquiry;
-use App\Notification;
 use App\Received;
+use App\Notification;
 use App\State;
 use App\City;
 use App\Document;
@@ -57,22 +57,9 @@ class InquiryController extends Controller
         }
 //        return $received_inquiry_ids;
 
-        // for each id, get the corresponding inquiry
-        $received_inquiries = [];
-        foreach ($received_inquiry_ids as $received_inquiry_id) {
-            $inquiry = \App\Inquiry::take(1)->where('id', $received_inquiry_id['inquiry_id'])->get();
 
-            $inquiry['read'] = $received_inquiry_id['read'];
-            foreach ($received_inquiry_rows as $row) {
-                if ($row->inquiry_id == $received_inquiry_id['inquiry_id']) {
-                    $inquiry['received_id'] = $row->id;
-                }
 
-            }
-            array_push($received_inquiries, $inquiry);
-        }
-
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
         $inquiries = Inquiry::orderBy('created_at', 'DESC')->paginate(10);
         $data['inquiries'] = $inquiries;
@@ -152,7 +139,7 @@ class InquiryController extends Controller
         }
 //        return $received_inquiries;
 
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
         return view('inquiries.create', $data);
     }
@@ -253,7 +240,7 @@ class InquiryController extends Controller
                     $city_inquiry = new Received();
                     $city_inquiry->user_id = $user_city_subscription->user_id;
                     $city_inquiry->inquiry_id = $inquiry->id;
-                    $city_inquiry->read = true;
+                    $city_inquiry->read = false;
                     $city_inquiry->save();
                     $notified[$key] = true;
                 }
@@ -276,6 +263,7 @@ class InquiryController extends Controller
      */
     public function show(Inquiry $inquiry)
     {
+
         $data = [];
         $data['inquiry'] = $inquiry;
 
@@ -323,18 +311,6 @@ class InquiryController extends Controller
             $data['saved'] = false;
         }
 
-        // mark inquiry as read
-        // get the corresponding received inquiry
-        $user_received = Received::where('user_id', $user->id)->get();
-
-//        return $data;
-
-        // if the user received inquiry id equals this inquiry id, mark it as read
-        foreach ($user_received as $item) {
-            if ($item->inquiry_id == $inquiry->id) {
-                Received::where('inquiry_id', $inquiry->id)->update(array('read' => true));
-            }
-        }
 
 
         // get received inquiries for user
@@ -354,29 +330,26 @@ class InquiryController extends Controller
         foreach ($received_inquiry_rows as $row) {
             array_push($received_inquiry_ids, ['inquiry_id' => $row->inquiry_id, 'read' => $row->read]);
         }
-//        return $received_inquiry_ids;
 
-        // for each id, get the corresponding inquiry
-        $received_inquiries = [];
-        foreach ($received_inquiry_ids as $received_inquiry_id) {
-            $inquiry = \App\Inquiry::where('id', $received_inquiry_id['inquiry_id'])->get();
 
-            $inquiry['read'] = $received_inquiry_id['read'];
-            array_push($received_inquiries, $inquiry);
 
-        }
-//        return $received_inquiries;
+        $received = Received::where([
+            'user_id' => auth()->user()->id,
+            'inquiry_id' => $inquiry->id
+        ])->update(['read' => true]);
 
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = Received::where('user_id', auth()->user()->id)->get();
 
 
         // get documents
-        $attachments = $inquiry->documents()->get();
+
+        $attachments = Document::where('inquiry_id', $inquiry->id)->get();
         $data['attachments'] = $attachments;
 
         foreach ($attachments as $attachment) {
             $data['paths'][] = $attachment->document_link;
         }
+
 //        dd($data);
         return view('inquiries.show', $data);
     }
@@ -451,7 +424,7 @@ class InquiryController extends Controller
             }
 //        return $received_inquiries;
 
-            $data['received_inquiries'] = $received_inquiries;
+            $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
 
             return view('inquiries.edit', $data);

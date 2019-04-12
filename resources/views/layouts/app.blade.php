@@ -115,8 +115,7 @@
                                     <i class="material-icons">mail</i>
                                     @php($unread_count = 0)
                                     @foreach($received_inquiries as $received_inquiry)
-
-                                        @if($received_inquiry[0]['read'] == false)
+                                        @if($received_inquiry['read'] == false)
                                             @php($unread_count++)
                                         @endif
                                     @endforeach
@@ -125,16 +124,16 @@
                             </a>
                             <div class="dropdown-menu dropdown-menu-small" aria-labelledby="dropdownMenuLink">
                                 @foreach($received_inquiries as $received_inquiry)
-                                    @if($received_inquiry[0]['read'] == false)
-                                        <a class="dropdown-item" href="/inquiries/{{ $received_inquiry[0]['id'] }}">
+                                    @if($received_inquiry['read'] == false)
+                                        <a class="dropdown-item" href="/inquiries/{{ $received_inquiry['id'] }}">
                                             <div class="notification__icon-wrapper">
                                                 <div class="notification__icon">
                                                     <i class="material-icons">mail</i>
                                                 </div>
                                             </div>
                                             <div class="notification__content">
-                                                <span class="notification__category">{{ $received_inquiry[0]['created_at'] }}</span>
-                                                <p>{{ $received_inquiry[0]['subject']}} | {{ str_limit(strip_tags($received_inquiry[0]['body']), $limit = 30, $end = '...') }}</p>
+                                                <span class="notification__category">{{ $received_inquiry['created_at'] }}</span>
+                                                <p>{{ $received_inquiry['subject']}} | {{ str_limit(strip_tags($received_inquiry['body']), $limit = 30, $end = '...') }}</p>
                                             </div>
                                         </a>
                                     @endif

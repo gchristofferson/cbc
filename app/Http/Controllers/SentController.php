@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Sent;
 use Illuminate\Http\Request;
+use App\Received;
 
 class SentController extends Controller
 {
@@ -66,21 +67,9 @@ class SentController extends Controller
         }
 //        return $received_inquiry_ids;
 
-        // for each id, get the corresponding inquiry
-        $received_inquiries = [];
-        foreach($received_inquiry_ids as $received_inquiry_id) {
-            $inquiry = \App\Inquiry::where('id', $received_inquiry_id['inquiry_id'])->get();
 
-            $inquiry['read'] = $received_inquiry_id['read'];
-            foreach ($received_inquiry_rows as $row) {
-                if ($row->inquiry_id == $received_inquiry_id['inquiry_id']) {
-                    $inquiry['received_id'] = $row->id;
-                }
-            }
-            array_push($received_inquiries, $inquiry);
-        }
 
-        $data['received_inquiries'] = $received_inquiries;
+        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
         // get saved inquiries
         $sent_inquiry_rows = Sent::orderBy('created_at', 'desc')->where('user_id', $user->id)->paginate(10);
