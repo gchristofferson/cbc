@@ -10,3 +10,9 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 idea_temp_LocalResourceRootsList
+.idea
+.vagrant
+*.conf
+/storage/
+/certificates/
+Vagrantfile

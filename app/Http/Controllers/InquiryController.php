@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Inquiry;
 use App\Mail\NewInquiry;
+use App\Notification;
 use App\Received;
 use App\State;
 use App\City;
@@ -11,6 +12,8 @@ use App\Document;
 use App\Sent;
 use App\User;
 use Illuminate\Http\Request;
+use Mockery\Exception;
+use Validator;
 
 class InquiryController extends Controller
 {
@@ -35,7 +38,7 @@ class InquiryController extends Controller
         }
         $data['user'] = $user;
 
-        if ($user->approved == 'off' ) {
+        if ($user->approved == 'off') {
             session()->flash('error', 'Your account is still pending approval');
             return redirect('/update-profile');
         }
@@ -56,7 +59,7 @@ class InquiryController extends Controller
 
         // for each id, get the corresponding inquiry
         $received_inquiries = [];
-        foreach($received_inquiry_ids as $received_inquiry_id) {
+        foreach ($received_inquiry_ids as $received_inquiry_id) {
             $inquiry = \App\Inquiry::take(1)->where('id', $received_inquiry_id['inquiry_id'])->get();
 
             $inquiry['read'] = $received_inquiry_id['read'];
@@ -75,7 +78,7 @@ class InquiryController extends Controller
         $data['inquiries'] = $inquiries;
 
         // check admin role
-        if (auth()->user()->admin == 'on'  || auth()->user()->super_admin == 'on') {
+        if (auth()->user()->admin == 'on' || auth()->user()->super_admin == 'on') {
             return view('inquiries.index-admin', $data);
         } else {
             return view('inquiries.index', $data);
@@ -119,7 +122,7 @@ class InquiryController extends Controller
         }
         $data['user'] = $user;
 
-        if ($user->approved == 'off' ) {
+        if ($user->approved == 'off') {
             session()->flash('error', 'Your account is still pending approval');
             return redirect('/update-profile');
         }
@@ -140,7 +143,7 @@ class InquiryController extends Controller
 
         // for each id, get the corresponding inquiry
         $received_inquiries = [];
-        foreach($received_inquiry_ids as $received_inquiry_id) {
+        foreach ($received_inquiry_ids as $received_inquiry_id) {
             $inquiry = Inquiry::take(1)->where('id', $received_inquiry_id['inquiry_id'])->get();
 
             $inquiry['read'] = $received_inquiry_id['read'];
@@ -157,183 +160,118 @@ class InquiryController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\User  $user
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\User $user
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request, User $user)
     {
-        //
-//        return dd(request());
-        $data = [];
-        $success_msg = '';
-        request()->validate([
-            'subject' => 'required',
-        ]);
-        if (request()->cities_array[0] == null) {
-            $msg = "You must send to at least one city";
-            $data['msg'] = $msg;
-            $data['subject'] = request()->subject;
-            $data['body'] = request()->body;
+        $request_fields = $request->all();
+        $current_user = auth()->user();
+        $validator = Validator::make($request_fields,
+            [
+                'subject' => 'min:1',
+                'body' => 'min:1',
+                'cities_array' => 'required',
+                'cities_array.*' => 'min:1',
+                'attachment.*' => 'mimetypes:image/jpeg,image/png,application/pdf'
+            ],
+            [
+                'cities_array.*.min' => 'You must select at least one city',
+                'attachment.*.mimes' => 'The file type you tried uploading is not allowed. Please try again.'
+            ]
+        );
 
-            return redirect()->back()->with('data', $data);
-        } else {
+        //? Check validation
+        if ($validator->fails()) {
+            echo "<pre>";
+            echo json_encode($validator->getMessageBag()->toArray(), JSON_PRETTY_PRINT);
+            echo "</pre>";
+            die("remove this");
+            return redirect()->back()->withErrors($validator->getMessageBag()->toArray());
+        }
+        $request_fields = (object)$request_fields;
+        $dto = (object)[
+            'subject' => $request_fields->subject,
+            'body' => $request_fields->body,
+            'city_ids' => explode(',', $request_fields->cities_array[0]),
+            'attachments' => isset($request_fields->attachment) ? $request_fields->attachment : []
+        ];
 
-            // create the inquiry
+        //? Check that cities exist on the DB
+        $city_array = City::find($dto->city_ids);
+        if (sizeof($city_array) != sizeof($dto->city_ids)) {
+            return redirect()->back()->withErrors(["Invalid request"]);
+        }
+        //? Data is valid after here
+
+        try {
+            //? Create inquiry
             $inquiry = new Inquiry();
-
-            $inquiry->subject = request()->subject;
-
-            if (request()->body == null) {
-                $inquiry->body = '';
-            } else {
-                $inquiry->body = request()->body;
-            }
-
-            $inquiry->sent = true;
-
+            $inquiry->subject = $dto->subject;
+            $inquiry->body = $dto->subject;
+            $inquiry->body = $dto->subject;
             $inquiry->user_id = auth()->id();
-
             $inquiry->save();
 
-            // retrieve the inquiry id
-            $inquiry_id = $inquiry->id;
+            //? Process Files
+            foreach ($dto->attachments as $file) {
+                // Save file
+                $folder = $current_user->id;
+                $filename = $file->hashName();
+                $file->storeAs('/public/attachments/' . $folder, $filename);
+                $path = url('storage/attachments/' . $folder . '/' . $filename);
 
-            // for each city, create a sent record
-            $cities_str = request()->cities_array[0];
-            $cities = explode(",", $cities_str);
+                // insert into documents table
+                $attachment = new Document();
+                $attachment->inquiry_id = $inquiry->id;
+                $attachment->document_link = $path;
+                $attachment->save();
+            }
 
-            $notification_emails = [];
-            $notification_user_ids = [];
-            foreach ($cities as $city) {
+            $notified = [];
+            foreach ($city_array as $cityDo) {
+                //? Push to inquiry to city
+                $city_inquiry = new Sent();
+                $city_inquiry->user_id = $current_user->id;
+                $city_inquiry->city_id = $cityDo->id;
+                $city_inquiry->inquiry_id = $inquiry->id;
+                $city_inquiry->save();
 
-                // get the city object
-                $objects = City::all()->where('id', $city);
+                $users_to_notify = Notification::where([
+                    'city_id' => $cityDo->id,
+                    'notify' => true
+                ])->get();
 
-                $city_obj = '';
 
-                foreach ($objects as $object) {
-                    $city_obj = $object;
-                }
-
-                // for each city, push user ids from notifications to array
-                $city_notifications = $city_obj->notifications;
-//                return $city_notifications;
-                if ($city_notifications != []) {
-                    foreach ($city_notifications as $city_notification) {
-                        if ($city_notification->notify == true) {
-                            // add to array if not there already
-                            if (! in_array($city_notification->user->email, $notification_emails)) {
-                                array_push($notification_emails, $city_notification->user->email);
-                            }
-                            if (! in_array($city_notification->user->id, $notification_user_ids)) {
-                                array_push($notification_user_ids, $city_notification->user->id);
-                            }
-                        }
+                foreach ($users_to_notify as $user_city_subscription) {
+                    //? Push to notifications
+                    $key = $user_city_subscription->user_id . '' . $inquiry->id;
+                    if (isset($notified[$key])) {
+                        continue;
                     }
-                }
-
-
-                // add inquiry to sent table for user
-                $sent = new Sent();
-
-                $sent->user_id = auth()->id();
-                $sent->inquiry_id = $inquiry_id;
-                $sent->city_id = $city;
-
-                $sent->save();
-
-            }
-
-
-            // add this inquiry to the received table for each user id
-            foreach ($notification_user_ids as $notification_user_id) {
-                $received = new Received();
-
-                $received->user_id = $notification_user_id;
-                $received->inquiry_id = $inquiry_id;
-                $received->save();
-            }
-
-
-
-
-
-            // for each attachment, create a document record
-            $files = request()->attachment;
-
-            // validate the uploads
-            $input_data = $request->all();
-
-            $validator = \Validator::make(
-                $input_data, [
-                'attachment.*' => 'max:10000|mimes:jpeg,png,bmp,gif,svg,doc,dot,docx,xls,xlsx,csv,ppt,pptx,txt,pdf,aac,epub,mp3,mpeg,ods,wav,mp4'
-            ],[
-                    'attachment.*.mimes' => 'The file type you tried uploading is not allowed. Please try again.',
-                    'attachment.*.max' => 'Sorry! Maximum allowed size for a file upload is 10MB',
-                ]
-            );
-
-            if ($validator->fails())
-            {
-                return response()->json(array(
-                    'success' => false,
-                    'errors' => $validator->getMessageBag()->toArray()
-
-                ), 400);             }
-
-
-            $attachment_links = [];
-            if (request()->hasFile('attachment')) {
-
-                foreach ($files as $file) {
-                    // validate the uploads
-
-                    if (auth()->user()->admin == 'on' || auth()->user()->super_admin == true && $user->id != auth()->id()) {
-                        $directory = $user->id;
-                    } else {
-                        $directory = auth()->id();
-                    }
-                    $filename = $file->hashName();
-                    $file->storeAs('/public/attachments/' . $directory, $filename);
-                    $path = url('storage/attachments/' . $directory . '/' . $filename);
-                    array_push($attachment_links, $path);
-
-                    // insert into documents table
-                    $attachment = new Document();
-
-                    $attachment->inquiry_id = $inquiry->id;
-                    $attachment->document_link = $path;
-
-                    $attachment->save();
-
+                    $city_inquiry = new Received();
+                    $city_inquiry->user_id = $user_city_subscription->user_id;
+                    $city_inquiry->inquiry_id = $inquiry->id;
+                    $city_inquiry->read = true;
+                    $city_inquiry->save();
+                    $notified[$key] = true;
                 }
             }
-
-            //construct and send inquiry as email to all users with notification
-            // TODO: add this to queue
-            $user = auth()->user();
-            foreach ($notification_emails as $email) {
-                \Mail::to($email)->send(
-                  new NewInquiry($inquiry, $user, $attachment_links)
-                );
-            }
-
-
-
-            // return the view
-            session()->flash('success', 'Inquiry Created and Sent!');
-
-            return redirect('/dashboard');
+        } catch (\Exception $e) {
+            throw $e;
+            //return redirect()->back()->withErrors(["Please try again"]);
         }
 
-
+        //? Return
+        session()->flash('success', 'Inquiry Created and Sent!');
+        return redirect('/dashboard');
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Inquiry  $inquiry
+     * @param  \App\Inquiry $inquiry
      * @return \Illuminate\Http\Response
      */
     public function show(Inquiry $inquiry)
@@ -351,20 +289,17 @@ class InquiryController extends Controller
         }
 
         $state_id = array();
-        foreach ($data['cities'] as $key=>$row) {
+        foreach ($data['cities'] as $key => $row) {
             $state_id[$key] = $row['state_id'];
         }
         array_multisort($state_id, SORT_DESC, $data['cities']);
-
-
-//        return $inquiry;
 
         $data['view'] = '';
 
         // get the user
         $user = auth()->user();
 
-        if ($user->approved == 'off' ) {
+        if ($user->approved == 'off') {
             session()->flash('error', 'Your account is still pending approval');
             return redirect('/update-profile');
         }
@@ -414,7 +349,6 @@ class InquiryController extends Controller
         $received_inquiry_rows = \App\Received::orderBy('created_at', 'desc')->where('user_id', $user->id)->get();
 
 
-
         // get the inquiry id's from each row
         $received_inquiry_ids = [];
         foreach ($received_inquiry_rows as $row) {
@@ -424,7 +358,7 @@ class InquiryController extends Controller
 
         // for each id, get the corresponding inquiry
         $received_inquiries = [];
-        foreach($received_inquiry_ids as $received_inquiry_id) {
+        foreach ($received_inquiry_ids as $received_inquiry_id) {
             $inquiry = \App\Inquiry::where('id', $received_inquiry_id['inquiry_id'])->get();
 
             $inquiry['read'] = $received_inquiry_id['read'];
@@ -450,7 +384,7 @@ class InquiryController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Inquiry  $inquiry
+     * @param  \App\Inquiry $inquiry
      * @return \Illuminate\Http\Response
      */
     public function edit(Inquiry $inquiry)
@@ -460,7 +394,7 @@ class InquiryController extends Controller
         $data['inquiry'] = $inquiry;
 
         $user = auth()->user();
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on' || $inquiry->user_id != auth()->id(), 403 );
+        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on' || $inquiry->user_id != auth()->id(), 403);
 
         if ($inquiry->user_id == auth()->id() || $user->admin == 'on' || $user->super_admin == 'on') {
             // get inquiry cities
@@ -473,7 +407,7 @@ class InquiryController extends Controller
             }
 
             $state_id = array();
-            foreach ($data['cities'] as $key=>$row) {
+            foreach ($data['cities'] as $key => $row) {
                 $state_id[$key] = $row['state_id'];
             }
             array_multisort($state_id, SORT_DESC, $data['cities']);
@@ -499,7 +433,6 @@ class InquiryController extends Controller
             $received_inquiry_rows = \App\Received::orderBy('created_at', 'desc')->where('user_id', $user->id)->get();
 
 
-
             // get the inquiry id's from each row
             $received_inquiry_ids = [];
             foreach ($received_inquiry_rows as $row) {
@@ -509,7 +442,7 @@ class InquiryController extends Controller
 
             // for each id, get the corresponding inquiry
             $received_inquiries = [];
-            foreach($received_inquiry_ids as $received_inquiry_id) {
+            foreach ($received_inquiry_ids as $received_inquiry_id) {
                 $inquiry = \App\Inquiry::where('id', $received_inquiry_id['inquiry_id'])->get();
 
                 $inquiry['read'] = $received_inquiry_id['read'];
@@ -531,8 +464,8 @@ class InquiryController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Inquiry  $inquiry
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Inquiry $inquiry
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Inquiry $inquiry)
@@ -551,7 +484,7 @@ class InquiryController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Inquiry  $inquiry
+     * @param  \App\Inquiry $inquiry
      * @return \Illuminate\Http\Response
      */
     public function destroy(Inquiry $inquiry)
@@ -609,13 +542,12 @@ class InquiryController extends Controller
                 $data['attachment'] = $attachment;
 
 
-
             }
         }
 
         return $data;
 
-    //    return redirect()->back()->with('data', $data);
+        //    return redirect()->back()->with('data', $data);
 
     }
 }

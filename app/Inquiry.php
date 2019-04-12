@@ -29,10 +29,6 @@ class Inquiry extends Model
         return $this->hasMany(Saved::class);
     }
 
-    public function sent_inquiry () {
-        return $this->hasOne(Sent::class);
-    }
-
     public function user()
     {
         return $this->belongsTo(User::class);

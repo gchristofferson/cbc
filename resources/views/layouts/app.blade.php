@@ -115,7 +115,8 @@
                                     <i class="material-icons">mail</i>
                                     @php($unread_count = 0)
                                     @foreach($received_inquiries as $received_inquiry)
-                                        @if($received_inquiry['read'] == false)
+
+                                        @if($received_inquiry[0]['read'] == false)
                                             @php($unread_count++)
                                         @endif
                                     @endforeach
@@ -124,7 +125,7 @@
                             </a>
                             <div class="dropdown-menu dropdown-menu-small" aria-labelledby="dropdownMenuLink">
                                 @foreach($received_inquiries as $received_inquiry)
-                                    @if($received_inquiry['read']=== 0)
+                                    @if($received_inquiry[0]['read'] == false)
                                         <a class="dropdown-item" href="/inquiries/{{ $received_inquiry[0]['id'] }}">
                                             <div class="notification__icon-wrapper">
                                                 <div class="notification__icon">

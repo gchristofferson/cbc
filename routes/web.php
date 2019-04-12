@@ -78,11 +78,24 @@ Route::post('paypal', 'PaymentController@payWithpaypal')->middleware('auth');
 Route::get('status', 'PaymentController@getPaymentStatus')->middleware('auth');
 
 
-
 Auth::routes();
 //Route::get('/logout', '\App\Http\Controllers\Auth\LoginController@logout');
 
 Route::get('/home', 'HomeController@index')->name('home')->middleware('auth');
+
+Route::get('/storage/attachments/{userid}/{filename}', function ($userid, $filename) {
+    $path = storage_path() . '/app/public/attachments/' . $userid . '/' . $filename;
+
+    if (!File::exists($path)) abort(404);
+
+    $file = File::get($path);
+    $type = File::mimeType($path);
+
+    $response = Response::make($file, 200);
+    $response->header("Content-Type", $type);
+    return $response;
+});
+
 
 //Route::get('/facades/encrypt', function () {
 //

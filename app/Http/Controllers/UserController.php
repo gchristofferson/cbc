@@ -17,7 +17,7 @@ class UserController extends Controller
     public function index()
     {
         //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on', 403 );
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on', 403);
         $data = [];
 //        $users = User::all()->paginate(10);
         $users = User::where('rejected', 'off')->orderBy('created_at', 'desc')->paginate(10);
@@ -52,7 +52,7 @@ class UserController extends Controller
 
         // for each id, get the corresponding inquiry
         $received_inquiries = [];
-        foreach($received_inquiry_ids as $received_inquiry_id) {
+        foreach ($received_inquiry_ids as $received_inquiry_id) {
             $inquiry = \App\Inquiry::take(1)->where('id', $received_inquiry_id['inquiry_id'])->get();
 
             $inquiry['read'] = $received_inquiry_id['read'];
@@ -83,7 +83,7 @@ class UserController extends Controller
     public function indexNew()
     {
         //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on', 403 );
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on', 403);
         $data = [];
         $matchThese = ['approved' => 'off', 'admin' => 'off', 'rejected' => 'off'];
         $users = User::where($matchThese)->orderBy('created_at', 'desc')->paginate(10);
@@ -118,7 +118,7 @@ class UserController extends Controller
 
         // for each id, get the corresponding inquiry
         $received_inquiries = [];
-        foreach($received_inquiry_ids as $received_inquiry_id) {
+        foreach ($received_inquiry_ids as $received_inquiry_id) {
             $inquiry = \App\Inquiry::take(1)->where('id', $received_inquiry_id['inquiry_id'])->get();
 
             $inquiry['read'] = $received_inquiry_id['read'];
@@ -149,7 +149,7 @@ class UserController extends Controller
     public function indexRejected()
     {
         //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on', 403 );
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on', 403);
         $data = [];
 //        $users = User::all()->paginate(10);
         $users = User::where('rejected', 'on')->orderBy('created_at', 'desc')->paginate(10);
@@ -184,7 +184,7 @@ class UserController extends Controller
 
         // for each id, get the corresponding inquiry
         $received_inquiries = [];
-        foreach($received_inquiry_ids as $received_inquiry_id) {
+        foreach ($received_inquiry_ids as $received_inquiry_id) {
             $inquiry = \App\Inquiry::take(1)->where('id', $received_inquiry_id['inquiry_id'])->get();
 
             $inquiry['read'] = $received_inquiry_id['read'];
@@ -215,14 +215,14 @@ class UserController extends Controller
     public function create()
     {
         //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on', 403 );
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on', 403);
         return view('users.create');
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -241,19 +241,19 @@ class UserController extends Controller
         } else {
             $avatar = "'avatar',";
         }
-            User::create(request([
-                'first_name',
-                'last_name',
-                'email',
-                'password',
-                'license',
-                'company_name',
-                'company_website',
-                'main_market',
-                'phone_number',
-                'agreed',
-                $avatar
-            ]));
+        User::create(request([
+            'first_name',
+            'last_name',
+            'email',
+            'password',
+            'license',
+            'company_name',
+            'company_website',
+            'main_market',
+            'phone_number',
+            'agreed',
+            $avatar
+        ]));
 
         return redirect('/users');
 
@@ -262,13 +262,13 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\User  $user
+     * @param  \App\User $user
      * @return \Illuminate\Http\Response
      */
     public function show(User $user)
     {
         //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on' || $user->id != auth()->id(), 403 );
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on' && $user->id != auth()->id(), 403);
         $data = [];
         $data['user'] = $user;
 
@@ -279,13 +279,15 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\User  $user
+     * @param  \App\User $user
      * @return \Illuminate\Http\Response
      */
     public function edit(User $user)
     {
-        //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on' || $user->id != auth()->id(), 403 );
+        $currentUser = auth()->user();
+
+
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on' && $user->id != auth()->id(), 403);
         $data = [];
 
         $data['view'] = '';
@@ -309,7 +311,7 @@ class UserController extends Controller
 
         // for each id, get the corresponding inquiry
         $received_inquiries = [];
-        foreach($received_inquiry_ids as $received_inquiry_id) {
+        foreach ($received_inquiry_ids as $received_inquiry_id) {
             $inquiry = \App\Inquiry::take(1)->where('id', $received_inquiry_id['inquiry_id'])->get();
 
             $inquiry['read'] = $received_inquiry_id['read'];
@@ -325,6 +327,7 @@ class UserController extends Controller
         $data['received_inquiries'] = $received_inquiries;
 
         if (auth()->user()->admin == 'on' || auth()->user()->super_admin == 'on') {
+
             return view('users.edit', $data);
         } else {
             return redirect('/dashboard');
@@ -336,8 +339,8 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\User  $user
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\User $user
      * @return \Illuminate\Http\Response
      */
     public function update(User $user)
@@ -353,7 +356,7 @@ class UserController extends Controller
             session()->flash('success', 'User approved');
             $approve_reject = true;
 
-        } elseif (request()->has('rejected-btn')){
+        } elseif (request()->has('rejected-btn')) {
             $user->update(request([
                 'rejected'
             ]));
@@ -363,14 +366,13 @@ class UserController extends Controller
             session()->flash('success', 'User rejected');
             $approve_reject = true;
 
-        } elseif (request()->has('notifications')){
+        } elseif (request()->has('notifications')) {
             $user->update(request([
                 'notifications'
             ]));
             session()->flash('success', 'Email Notifications Setting Updated');
             return back();
-        }
-        else {
+        } else {
             request()->validate([
                 'first_name' => 'required',
                 'last_name' => 'required',
@@ -393,7 +395,7 @@ class UserController extends Controller
                         'avatar' => 'image|max:1024|dimensions:ratio=1/1',
                     ]);
                     $directory = '';
-                    if (auth()->user()->admin == 'on' || auth()->user()->super_admin == true && $user->id != auth()->id()) {
+                    if (auth()->user()->admin == 'on' || auth()->user()->super_admin == 'on' || $user->id == auth()->id()) {
                         $directory = $user->id;
                     } else {
                         $directory = auth()->id();
@@ -449,14 +451,14 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\User  $user
+     * @param  \App\User $user
      * @return \Illuminate\Http\Response
      */
     public function destroy(User $user)
     {
         //
         $logged_user = auth()->user();
-        if ($user->admin == 'on'  && $user->super_admin != 'on') {
+        if ($user->admin == 'on' || $user->super_admin == 'on') {
             session()->flash('error', "Admins can't be deleted. If you are sure, turn admin off, update, then delete this user");
             return back();
         }

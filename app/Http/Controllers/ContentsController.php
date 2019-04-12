@@ -456,7 +456,7 @@ class ContentsController extends Controller
         foreach ($received_inquiry_rows as $row) {
             array_push($received_inquiry_ids, ['inquiry_id' => $row->inquiry_id, 'read' => $row->read]);
         }
-//        return $received_inquiry_ids;
+
 
         // for each id, get the corresponding inquiry
         $received_inquiries = [];
@@ -472,6 +472,11 @@ class ContentsController extends Controller
             }
             array_push($received_inquiries, $inquiry);
         }
+
+        //echo "<pre>";
+        //print_r(array_slice($received_inquiries, 0, 4));
+        //echo "</pre>";
+        //die();
 
         $data['received_inquiries'] = $received_inquiries;
 
