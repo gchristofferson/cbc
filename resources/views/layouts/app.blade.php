@@ -78,6 +78,12 @@
                             <span>Saved Inquiries</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="/subscriptions">
+                            <i class="material-icons">business</i>
+                            <span>Subscriptions</span>
+                        </a>
+                    </li>
                     @if($user->admin == 'on' || $user->super_admin == 'on')
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle " data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="true">

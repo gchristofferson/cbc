@@ -11,21 +11,6 @@
             <h6 class="m-0">Saved Inquires</h6>
             <div class="block-handle"></div>
         </div>
-        {{--<div class="no-footer border-bottom">--}}
-        {{--<div class="dataTables_length" id="DataTables_Table_0_length">--}}
-        {{--<label>Show --}}
-        {{--<select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0" class="">--}}
-        {{--<option value="10">10</option>--}}
-        {{--<option value="25">25</option>--}}
-        {{--<option value="50">50</option>--}}
-        {{--<option value="100">100</option>--}}
-        {{--</select> entries--}}
-        {{--</label>--}}
-        {{--</div>--}}
-        {{--<div id="DataTables_Table_0_filter" class="dataTables_filter">--}}
-        {{--<label>Search:<input type="search" class="" placeholder="" aria-controls="DataTables_Table_0"></label>--}}
-        {{--</div>--}}
-        {{--</div>--}}
         <div class="card-body p-0">
 
             @foreach($saved_inquiries as $saved_inquiry)

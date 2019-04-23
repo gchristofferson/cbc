@@ -6,7 +6,7 @@ use App\Saved;
 use Illuminate\Http\Request;
 use App\Received;
 
-class SavedController extends Controller
+class SavedController extends BaseController
 {
 
     public function create()
@@ -26,83 +26,16 @@ class SavedController extends Controller
      */
     public function index()
     {
-        //
-        $data = [];
-
-
-//        $inquiries = Inquiry::orderBy('created_at', 'DESC')->paginate(10);
-//        $data['inquiries'] = $inquiries;
-
-        $data['view'] = '';
-
-        // get the user
-        $user = auth()->user();
-
-        // get received inquiries for user
-        // check admin role
-        if ($user->admim == 'on' || $user->super_admin == 'on') {
-            $data['view'] = 'admin_options';
-        }
-        $data['user'] = $user;
-
-        if ($user->approved == 'off' ) {
-            session()->flash('error', 'Your account is still pending approval');
-            return redirect('/update-profile');
-        }
-
-        abort_if($user->rejected == 'on', 403);
-
-        // get received inquiry rows
-        $received_inquiry_rows = \App\Received::orderBy('created_at', 'desc')->where('user_id', $user->id)->paginate(10);
-
-        $data['received_inquiry_rows'] = $received_inquiry_rows; // for pagination links
-//        return $received_inquiry_rows;
-
-
-        // get the inquiry id's from each row
-        $received_inquiry_ids = [];
-        foreach ($received_inquiry_rows as $row) {
-            array_push($received_inquiry_ids, ['inquiry_id' => $row->inquiry_id, 'read' => $row->read]);
-        }
-//        return $received_inquiry_ids;
-
-
-
-        $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
-
-        // get saved inquiries
-        $saved_inquiry_rows = \App\Saved::orderBy('created_at', 'desc')->where('user_id', $user->id)->paginate(10);
-        $data['saved_inquiry_rows'] = $saved_inquiry_rows; // for pagination links
-
-        // get the inquiry id's from each row
-        $saved_inquiry_ids = [];
-        foreach ($saved_inquiry_rows as $row) {
-            array_push($saved_inquiry_ids, $row->inquiry_id);
-        }
-
-        // for each id, get the corresponding inquiry
-        $saved_inquiries = [];
-        foreach($saved_inquiry_ids as $id) {
-            $inquiry = \App\Inquiry::where('id', $id)->get();
-            foreach ($saved_inquiry_rows as $row) {
-                if ($row->inquiry_id == $id) {
-                    $inquiry['saved_id'] = $row->id;
-                }
-            }
-            array_push($saved_inquiries, $inquiry);
-        }
-
-        $data['saved_inquiries'] = $saved_inquiries;
-
-        return view('saved.index', $data);
+        $savedInquires = (array)Saved::getUserSaveInquires(\Auth::user());
+        $viewData = $this->getViewData($savedInquires);
+        return view('saved.index', $viewData);
     }
-
 
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -113,7 +46,7 @@ class SavedController extends Controller
         ]);
         if ((isset($_SERVER['HTTP_REFERER']) && !empty($_SERVER['HTTP_REFERER']))) {
             if (strtolower(parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST)) != strtolower($_SERVER['HTTP_HOST'])) {
-            // referer not from the same domain
+                // referer not from the same domain
                 $prev_url = $_SERVER['HTTP_REFERER'];
             } else {
                 $prev_url = request()->back_url;
@@ -124,7 +57,6 @@ class SavedController extends Controller
         if (isset($prev_url)) {
             session()->flash('prev_url', $prev_url);
         }
-
 
 
         $saved = new Saved();
@@ -138,12 +70,10 @@ class SavedController extends Controller
     }
 
 
-
-
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Saved  $saved
+     * @param  \App\Saved $saved
      * @return \Illuminate\Http\Response
      */
     public function destroy(Saved $saved)

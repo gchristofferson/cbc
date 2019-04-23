@@ -55,8 +55,8 @@ Route::resource('notifications', 'NotificationController')->middleware('auth');
 Route::post('/notifications/create', 'NotificationController@create')->middleware('auth');
 
 // Subscriptions
-Route::resource('subscriptions', 'SubscriptionController')->middleware('auth');
-Route::post('/subscriptions/create', 'SubscriptionController@create')->middleware('auth');
+Route::resource('subscriptions', 'Subscriptions')->middleware('auth');
+Route::post('/subscriptions/create', 'Subscriptions@subscribe')->middleware('auth');
 
 // Documents
 Route::resource('documents', 'DocumentController')->middleware('auth');
@@ -65,9 +65,7 @@ Route::resource('documents', 'DocumentController')->middleware('auth');
 Route::resource('discounts', 'DiscountController')->middleware('auth');
 
 // Contents
-//Route::get('/login', 'ContentsController@login')->name('login');
-//Route::get('/register', 'ContentsController@register')->name('register');
-//Route::get('/forgot-password', 'ContentsController@forgot')->name('forgot');
+
 Route::get('/dashboard', 'ContentsController@dashboard')->name('dashboard')->middleware('auth');
 Route::get('/update-profile', 'ContentsController@updateProfile')->name('update-profile')->middleware('auth');
 Route::post('/update-profile', 'ContentsController@updateProfile')->middleware('auth');
@@ -96,14 +94,6 @@ Route::get('/storage/attachments/{userid}/{filename}', function ($userid, $filen
     return $response;
 });
 
+Route::get('/home', 'HomeController@index')->name('home')->middleware('auth');
 
-//Route::get('/facades/encrypt', function () {
-//
-//    return Crypt::encrypt('123456789');
-//});
-//
-//Route::get('/facades/decrypt', function () {
-//
-//    return Crypt::decrypt('eyJpdiI6IkliMTVXYzlWaGU1cTFYZGZSVzdweEE9PSIsInZhbHVlIjoiSENLTkRFQm04WldoWWtzYUp4ekdpMUFnXC9LdHMzRWlaM2lHR01tS25TSWM9IiwibWFjIjoiMDgwYzc2NDJmNmU1NzljZjJkYzZlMjRmZjg4ODk1MjFmMmQ1NzJmYjlmZmM0ZGIzZmM1NTkxM2NkOTM3ZmU1MCJ9
-//');
-//});
+

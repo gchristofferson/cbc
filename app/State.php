@@ -10,6 +10,7 @@ class State extends Model
     protected $fillable = [
         'state',
         'price',
+        'stripe_sub_id',
       ];
 
     public function cities () {
@@ -23,5 +24,4 @@ class State extends Model
     public function discounts () {
         return $this->hasMany(Discount::class);
     }
-
 }

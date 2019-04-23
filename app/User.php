@@ -75,4 +75,8 @@ class User extends Authenticatable
         return $this->hasManyThrough(Inquiry::class, Sent::class);
     }
 
+    public function isSubscribed($stateId){
+        return $this->subscriptions()->where('state_id', $stateId)->count() > 0;
+    }
+
 }

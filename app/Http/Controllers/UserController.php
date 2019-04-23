@@ -17,6 +17,7 @@ class UserController extends Controller
      */
     public function index()
     {
+
         //
         abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on', 403);
         $data = [];
@@ -255,7 +256,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        //
+
         abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on' && $user->id != auth()->id(), 403);
         $data = [];
         $data['user'] = $user;
