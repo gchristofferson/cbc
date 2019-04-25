@@ -10,19 +10,9 @@ class Subscription extends Model
     protected $fillable = [
         'state_id',
         'user_id',
-        'paid',
-        'has_discount',
-        'discount_expire_date',
-        'discount_expired',
-        'used',
         'subscription_start_date',
         'subscription_expire_date',
-    ];
-
-    protected $dates = [
-        'discount_expire_date',
-        'subscription_start_date',
-        'subscription_expire_date',
+        'stripe_invoice'
     ];
 
     public function user()

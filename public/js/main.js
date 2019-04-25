@@ -44,7 +44,6 @@ $(document).ready(function () {
             linkStr = protocol + "//";
             linkStr += hostname;
             navLink = $(this).attr('href');
-            console.log(navLink);
             linkStr += navLink;
             if (linkStr === locStr || linkStr === s || linkStr === t) {
                 // console.log($(this));

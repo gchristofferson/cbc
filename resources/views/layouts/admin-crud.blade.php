@@ -191,6 +191,7 @@
                     </div>
                     @php(Session::forget('success'))
                 @endif
+
                 @if($message = Session::get('error'))
                     <div class="container-fluid px-0">
                         <div class="alert alert-danger alert-dismissible fade show m-0" role="alert">

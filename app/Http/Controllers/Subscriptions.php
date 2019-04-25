@@ -26,48 +26,80 @@ class Subscriptions extends BaseController
 
     public function store(Request $request)
     {
-//        echo "<pre>";
-//        print_r($request->all());
-//        echo "</pre>";
         $statearray = json_decode($request->stateIds);
-        //$statearray[] = 33333;
-        $this->subscribe($statearray);
+        try {
+            $this->subscribe($statearray, $request->stripeToken, $request["coupon"]);
+            session()->flash('success', 'Subscription successful!.');
+        } catch (\Stripe\Error\InvalidRequest $e) {
+            session()->flash('error', "Something went wrong, try again");
+        } catch (\BadMethodCallException $e) {
+            session()->flash('error', "Something went wrong, try again");
+        } catch (\Stripe\Error\Card $e) {
+            session()->flash('error', "Payment method declined, please try again.");
+        } catch (\Exception $e) {
+            session()->flash('error', "Something went wrong, try again");
+        }
+        return redirect('/subscriptions');
+        // abort($result);
     }
 
-    private function subscribe($stateIds, $coupon = null)
+    private function subscribe($stateIds, $stripe_token, $coupon = null)
     {
         $user = Auth::user();
         $statesToSubscribe = State::WhereIn('id', $stateIds)->get();
         if ($statesToSubscribe->count() !== sizeof($stateIds)) {
-            return 400;
+            throw new \BadMethodCallException("Mismatch");
         }
         $stripeIds = [];
         foreach ($statesToSubscribe as $state) {
             if (Auth::user()->isSubscribed($state->id)) {
-                return 400;
+                throw new \BadMethodCallException("User already subscribed");
+//                return 400;
             }
             if ($state->stripe_sub_id == null) {
-                return 500;
+                throw new \BadMethodCallException("States not found");
+//                return 500;
             }
             $stripeIds[] = $state->stripe_sub_id;
         }
         //Check coupon
-        if ($coupon != null && $this->checkStripeCoupon($coupon)) {
-            return 400;
+        if (!empty($coupon) && $this->checkStripeCouponP($coupon) == -1) {
+            throw new \Exception("coupon not found " . $coupon);
+//            return 400;
         }
         if ($user->stripe_customer_id === null) return 500;
-        $this->createStripeSubscription($stripeIds, $user->stripe_customer_id);
+
+        $stripe_cus_id = $user->stripe_customer_id;
+
+        \Stripe\Customer::update(
+            $stripe_cus_id,
+            [
+                'source' => $stripe_token
+            ]
+        );
+
+        $subscription_data = $this->createStripeSubscription($stripeIds, $user->stripe_customer_id, $coupon);
+
+
         //Subscribe
+        foreach ($statesToSubscribe as $state) {
+            $state->subscribe(
+                $user,
+                $subscription_data->latest_invoice,
+                new \DateTime("@$subscription_data->current_period_start"),
+                new \DateTime("@$subscription_data->current_period_end")
+            );
+        }
     }
 
-    public function checkStripeCoupon($coupon)
+    private function checkStripeCouponP($coupon)
     {
         try {
             $response = \Stripe\Coupon::retrieve($coupon);
         } catch (\Stripe\Error\InvalidRequest $r) {
-            return false;
+            return -1;
         }
-        return true;
+        return $response->percent_off;
     }
 
     private function createStripeSubscription($sub_items, $user_id, $coupon = null)
@@ -76,15 +108,41 @@ class Subscriptions extends BaseController
         foreach ($sub_items as $sub_id) {
             $items[] = ['plan' => $sub_id];
         }
-        $subscription = [
+
+        $subscriptionData = [
             'customer' => $user_id,
             'items' => $items
         ];
-        if ($coupon != null) {
-            $subscription['coupon'] = $coupon;
+
+        if (!empty($coupon)) {
+            $subscriptionData['coupon'] = $coupon;
         }
-        $subscription = \Stripe\Subscription::create($subscription);
-        print_r($subscription);
+
+        $subscription = \Stripe\Subscription::create($subscriptionData);
+
+        return (object)[
+            "latest_invoice" => $subscription->latest_invoice,
+            "current_period_end" => $subscription->current_period_end,
+            "current_period_start" => $subscription->current_period_start
+        ];
+    }
+
+    public function checkStripeCoupon($coupon)
+    {
+        $rcoupon = $this->checkStripeCouponP($coupon);
+        if ($rcoupon == -1) {
+            return response("notfound", 404);
+        } else {
+            return response()->json($rcoupon);
+        }
+    }
+
+    public function paymentSuccessful(Request $request)
+    {
+    }
+
+    public function paymentFailed(Request $request)
+    {
     }
 
 

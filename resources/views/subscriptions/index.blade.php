@@ -2,6 +2,8 @@
 
 @section('title')
     <title>Markets | Commercial Broker Connection</title>
+
+
 @endsection
 
 @section('content')
@@ -35,6 +37,7 @@
 
                                     @else
                                         <span id="add-{{$state->id}}" class="btn btn-sm btn-outline-success disabled">Subscribed</span>
+
                                     @endif
                                 </td>
                             </tr>
@@ -49,7 +52,7 @@
                 </div>
             </div>
             <div class="col-md-1"></div>
-            <div class="col-md-6 card card-small user-activity mb-4 mt-4">
+            <div class="col-md-6 card mb-4 mt-4">
                 <div class="card-header border-bottom">
                     <h6 class="m-0">Cart</h6>
                     <div class="block-handle"></div>
@@ -77,31 +80,53 @@
                         </thead>
                     </table>
                 </div>
-                <div class="card-footer p-2">
-                    <form class="form-group" action="/subscriptions" method="post" enctype="multipart/form-data">
+                <div class="card-footer p-0">
+
+                    <form class="form-group" id="payment-form" action="/subscriptions" method="post"
+                          enctype="multipart/form-data">
                         @csrf
                         <input id="stateIds" name="stateIds" type="hidden" value="[]">
-                        <div class="input-group mb-3 hidden" id="promoCode">
-                            <input id="coupon" type="text" name="coupon" class="form-control"
-                                   placeholder="Enter a coupon"
-                                   aria-label="Enter a coupon" aria-describedby="basic-addon2">
-                            <div class="input-group-append">
-                                <button onclick="disablePromoCode()" class="btn btn-outline-danger" type="button">
-                                    Remove
+                        <div id="card-element">
+                            <!-- A Stripe Element will be inserted here. -->
+                        </div>
+                        <div class="mt-3">
+                            <div class="input-group mb-3 hidden" id="promoCode">
+                                <div class="input-group-prepend">
+                                    <button onclick="checkCoupon()" class="btn btn-outline-success" type="button">
+                                        Add coupon
+                                    </button>
+                                </div>
+
+                                <input id="coupon" type="text" name="coupon" class="form-control"
+                                       placeholder="Enter a coupon"
+                                       aria-label="Enter a coupon" aria-describedby="basic-addon2">
+
+                                <div class="input-group-append">
+                                    <button onclick="disablePromoCode()" class="btn btn-outline-danger" type="button">
+                                        Remove
+                                    </button>
+                                </div>
+                                <button type="submit" id="subscribe-1" disabled class="btn btn-success disabled">
+                                    Subscribe
                                 </button>
                             </div>
-                        </div>
-                        <span id="add-coupon" onclick="enablePromoCode()" class="btn  btn-outline-secondary">
+                            <span id="add-coupon" onclick="enablePromoCode()" class="btn  btn-outline-secondary">
                             Add promo code
                         </span>
-                        <button type="submit" id="subscribe" disabled class="btn btn-success disabled">Subscribe
-                        </button>
+                            <button type="submit" id="subscribe" disabled class="btn btn-success disabled">Subscribe
+                            </button>
+                            <!-- Used to display form errors. -->
+                            <div id="card-errors" role="alert"></div>
+                            <div id="messages" role="alert"></div>
+                        </div>
                     </form>
+                    <script src="https://js.stripe.com/v3/"></script>
                 </div>
             </div>
         </div>
     </div>
     <script>
+
         var cart = document.getElementById("cart-body");
         var stateIdEl = document.getElementById("stateIds");
         var subTotalEl = document.getElementById("subtotal");
@@ -109,12 +134,48 @@
         var promoCodeInputField = document.getElementById("coupon");
         var addPromoCodeButton = document.getElementById("add-coupon");
         var subscribeButton = document.getElementById("subscribe");
+        var subscribeButton1 = document.getElementById("subscribe-1");
+        var messages = document.getElementById("messages");
         var isPromoCodeEnabled = false;
         var subtotal = 0;
+        var promoCode = 1;
         var selectedMarkets = [];
 
         function getStateId(id) {
             return 'state-' + id;
+        }
+
+        function checkCoupon() {
+            let coupon = promoCodeInputField.value
+            if (coupon.length === 0) {
+                resetPromoCode();
+            } else {
+                fetch('/subscriptions/checkcoupon/' + coupon)
+                    .then(function (response) {
+                        if (response.status === 200) {
+                            response.json().then(function (response) {
+                                promoCodeInputField.classList.remove("is-invalid");
+                                promoCodeInputField.classList.add("is-valid");
+                                messages.innerHTML = response + "% OFF Coupon Added!";
+                                promoCode = (100 - response) * .01;
+                                updateSubTotal(subtotal);
+                                // setTimeout(function () {
+                                //     messages.innerHTML = "";
+                                // }, 3000)
+                            });
+                        } else {
+                            promoCode = 1;
+                            updateSubTotal(subtotal);
+                            promoCodeInputField.value = "";
+                            promoCodeInputField.classList.remove("is-valid");
+                            promoCodeInputField.classList.add("is-invalid");
+                            messages.innerHTML = "Coupon " + coupon + " is not valid";
+                            setTimeout(function () {
+                                messages.innerHTML = "";
+                            }, 3000)
+                        }
+                    })
+            }
         }
 
         function toggleAddRemoveForStateList(id) {
@@ -144,6 +205,10 @@
             stateIdEl.setAttribute("value", jsonArray);
         }
 
+        function updateSubTotal(newVale) {
+            subTotalEl.innerHTML = (newVale * promoCode).toPrecision(4);
+        }
+
         function addState(id, state, price) {
             if (selectedMarkets.indexOf(id) >= 0) return;
             let row = document.createElement("tr");
@@ -162,9 +227,11 @@
             row.appendChild(rowData[2]);
             cart.appendChild(row);
             subtotal += price;
-            subTotalEl.innerHTML = subtotal.toPrecision(4);
+            updateSubTotal(subtotal);
             subscribeButton.classList.remove("disabled");
             subscribeButton.removeAttribute("disabled");
+            subscribeButton1.classList.remove("disabled");
+            subscribeButton1.removeAttribute("disabled");
             toggleAddRemoveForStateList(id);
             addStateIdToForm(id);
             selectedMarkets.push(id);
@@ -180,6 +247,8 @@
                 subTotalEl.innerHTML = "0.00";
                 subscribeButton.classList.add("disabled");
                 subscribeButton.setAttribute("disabled", true);
+                subscribeButton1.classList.add("disabled");
+                subscribeButton1.setAttribute("disabled", true);
             }
             document.getElementById(getStateId(id)).remove();
             toggleAddRemoveForStateList(id);
@@ -187,21 +256,108 @@
             selectedMarkets.splice(marketIndex, 1);
         }
 
+        function resetPromoCode() {
+            promoCodeInputField.classList.remove("is-invalid");
+            promoCodeInputField.classList.remove("is-valid");
+            promoCodeInputField.value = "";
+            messages.innerHTML = "";
+            promoCode = 1;
+            updateSubTotal(subtotal);
+        }
+
         function enablePromoCode() {
             if (isPromoCodeEnabled) return;
             promoCodeContainer.classList.remove("hidden");
             addPromoCodeButton.classList.add("hidden");
-            promoCodeInputField.setAttribute("value", "");
+            subscribeButton.classList.add("hidden");
+            resetPromoCode();
             isPromoCodeEnabled = true;
         }
 
         function disablePromoCode() {
+            promoCodeInputField.classList.remove("is-invalid");
+            promoCodeInputField.classList.remove("is-valid");
             if (!isPromoCodeEnabled) return;
             promoCodeContainer.classList.add("hidden");
             addPromoCodeButton.classList.remove("hidden");
-            promoCodeInputField.setAttribute("value", "");
+            subscribeButton.classList.remove("hidden");
+            resetPromoCode();
             isPromoCodeEnabled = false;
         }
+
+        /*STRIPE*/
+
+        // Create a Stripe client.
+        var stripe = Stripe('pk_test_b8F0FiRDBw3plFvkCIh5XiXf005q74yZNT');
+
+        // Create an instance of Elements.
+        var elements = stripe.elements();
+
+        // Custom styling can be passed to options when creating an Element.
+        // (Note that this demo uses a wider set of styles than the guide below.)
+        var style = {
+            base: {
+                color: '#32325d',
+                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                fontSmoothing: 'antialiased',
+                fontSize: '16px',
+                '::placeholder': {
+                    color: '#aab7c4'
+                }
+            },
+            invalid: {
+                color: '#fa755a',
+                iconColor: '#fa755a'
+            }
+        };
+
+        // Create an instance of the card Element.
+        var card = elements.create('card', {style: style});
+
+        // Add an instance of the card Element into the `card-element` <div>.
+        card.mount('#card-element');
+
+        // Handle real-time validation errors from the card Element.
+        card.addEventListener('change', function (event) {
+            var displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+
+        // Handle form submission.
+        var form = document.getElementById('payment-form');
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            stripe.createToken(card).then(function (result) {
+                if (result.error) {
+                    // Inform the user if there was an error.
+                    var errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = result.error.message;
+                } else {
+                    // Send the token to your server.
+                    stripeTokenHandler(result.token);
+                }
+            });
+        });
+
+        // Submit the form with the token ID.
+        function stripeTokenHandler(token) {
+            // Insert the token ID into the form so it gets submitted to the server
+            var form = document.getElementById('payment-form');
+            var hiddenInput = document.createElement('input');
+            hiddenInput.setAttribute('type', 'hidden');
+            hiddenInput.setAttribute('name', 'stripeToken');
+            hiddenInput.setAttribute('value', token.id);
+            form.appendChild(hiddenInput);
+
+            // Submit the form
+            form.submit();
+        }
+
     </script>
 @endsection
 @section('footer-btn')
