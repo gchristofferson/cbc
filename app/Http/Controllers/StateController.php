@@ -70,7 +70,7 @@ class StateController extends Controller
     public function create()
     {
         //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on', 403 );
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on', 403 );
         return view('states.create');
     }
 
@@ -82,11 +82,13 @@ class StateController extends Controller
      */
     public function store(Request $request)
     {
+
         //
         $data = [];
         State::create(request()->validate([
             'state' => 'required',
             'price' => 'required',
+            'stripe_sub_id' => 'required',
         ]));
 
         session()->flash('success', 'State Created!');
@@ -104,8 +106,7 @@ class StateController extends Controller
     public function show(State $state)
     {
         //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on', 403 );
-        $data = [];
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on', 403 );        $data = [];
         $data['state'] = $state;
 
         $data['view'] = '';
@@ -165,8 +166,7 @@ class StateController extends Controller
     public function edit(State $state)
     {
         //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on', 403 );
-        $data = [];
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on', 403 );        $data = [];
         $data['state'] = $state;
         return view('states.edit', $data);
     }
