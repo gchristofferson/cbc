@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\State;
+use App\Subscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -83,9 +84,11 @@ class Subscriptions extends BaseController
 
         //Subscribe
         foreach ($statesToSubscribe as $state) {
+            $sub_id = $subscription_data->items[$state->stripe_sub_id];
             $state->subscribe(
                 $user,
                 $subscription_data->latest_invoice,
+                $sub_id,
                 new \DateTime("@$subscription_data->current_period_start"),
                 new \DateTime("@$subscription_data->current_period_end")
             );
@@ -119,13 +122,52 @@ class Subscriptions extends BaseController
         }
 
         $subscription = \Stripe\Subscription::create($subscriptionData);
-
+        $items = [];
+        foreach ($subscription->items->data as $item) {
+            $items[$item->plan->id] = $item->subscription;
+        }
         return (object)[
+            "items" => $items,
             "latest_invoice" => $subscription->latest_invoice,
             "current_period_end" => $subscription->current_period_end,
             "current_period_start" => $subscription->current_period_start
         ];
     }
+
+    public function cancelSubscription(Request $request)
+    {
+        $user = Auth::user();
+        $state = State::find($request->post("id"));
+        $current_user_subscription = $state->subscriptions()->where('user_id', $user->id)->firstOrFail();
+        $sub_id = $current_user_subscription->sub_id;
+        \Stripe\Subscription::update(
+            $sub_id,
+            [
+                'cancel_at_period_end' => true,
+            ]
+        );
+        $state->pause($user);
+        session()->flash('success', ', Subscription paused, please reactivate before end date to avoid interruptions!.');
+        return redirect('/subscriptions');
+    }
+    public function restartSubscription(Request $request)
+    {
+        $user = Auth::user();
+        $state = State::find($request->post("id"));
+        $current_user_subscription = $state->subscriptions()->where('user_id', $user->id)->firstOrFail();
+        $sub_id = $current_user_subscription->sub_id;
+        \Stripe\Subscription::update(
+            $sub_id,
+            [
+                'cancel_at_period_end' => false,
+            ]
+        );
+        $state->reactivate($user);
+        session()->flash('success', 'Subscription is active');
+        return redirect('/subscriptions');
+    }
+
+
 
     public function checkStripeCoupon($coupon)
     {
@@ -136,14 +178,5 @@ class Subscriptions extends BaseController
             return response()->json($rcoupon);
         }
     }
-
-    public function paymentSuccessful(Request $request)
-    {
-    }
-
-    public function paymentFailed(Request $request)
-    {
-    }
-
 
 }

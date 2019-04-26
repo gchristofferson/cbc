@@ -17,13 +17,18 @@
                             @csrf
 
                             <div class="form-row">
-                                <div class="form-group col-md-6">
+                                <div class="form-group col">
                                     <label for="state">State</label>
                                     <input type="text" class="form-control" id="state" name="state" placeholder="State" required="" value="{{ old('state') }}">
                                 </div>
-                                <div class="form-group col-md-6">
+                                <div class="form-group col">
                                     <label for="price">Price Per Year</label>
-                                    <input type="number" class="form-control" id="price" name="price" placeholder="$" required="" value="{{ old('price') }}">
+                                    <input type="number" class="form-control" step="0.01" id="price" name="price" placeholder="$" required="" value="{{ old('price') }}">
+                                </div>
+                                <div class="form-group col">
+                                    <label for="price">Stripe id</label>
+                                    <input type="string" class="form-control" id="stripe" name="stripe_plan_id"
+                                           placeholder="$" required="" value="">
                                 </div>
                             </div>
 

@@ -18,8 +18,8 @@ class StateController extends Controller
      */
     public function index()
     {
-        //
-        abort_if(auth()->user()->admin != 'on' || auth()->user()->super_admin != 'on', 403 );
+
+        abort_if(auth()->user()->admin != 'on' && auth()->user()->super_admin != 'on', 403 );
         $data = [];
         $states = State::orderBy('created_at', 'desc')->paginate(10);
         $data['states'] = $states;

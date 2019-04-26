@@ -12,7 +12,9 @@ class Subscription extends Model
         'user_id',
         'subscription_start_date',
         'subscription_expire_date',
-        'stripe_invoice'
+        'stripe_invoice',
+        'sub_id',
+        'renew'
     ];
 
     public function user()

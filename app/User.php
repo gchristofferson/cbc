@@ -43,40 +43,54 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
-    public function inquiries () {
+    public function inquiries()
+    {
         return $this->hasMany(Inquiry::class);
     }
 
-    public function notifications () {
+    public function notifications()
+    {
         return $this->hasMany(Notification::class);
     }
 
-    public function cities () {
+    public function cities()
+    {
         return $this->hasManyThrough(City::class, Notification::class);
     }
 
-    public function subscriptions () {
-        return $this->hasMany(Subscription::class);
-    }
-
-    public function states () {
+    public function states()
+    {
         return $this->hasManyThrough(State::class, Subscription::class);
     }
 
-    public function received_inquiries () {
+    public function received_inquiries()
+    {
         return $this->hasManyThrough(Inquiry::class, Received::class);
     }
 
-    public function saved_inquiries () {
+    public function saved_inquiries()
+    {
         return $this->hasManyThrough(Inquiry::class, Saved::class);
     }
 
-    public function sent_inquiries () {
+    public function sent_inquiries()
+    {
         return $this->hasManyThrough(Inquiry::class, Sent::class);
     }
 
-    public function isSubscribed($stateId){
-        return $this->subscriptions()->where('state_id', $stateId)->count() > 0;
+    public function isSubscribed($stateId)
+    {
+        try {
+            $sub = $this->subscriptions()->where('state_id', $stateId)->firstOrFail();
+            return $sub;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
     }
 
 }

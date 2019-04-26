@@ -55,9 +55,12 @@ Route::resource('notifications', 'NotificationController')->middleware('auth');
 Route::post('/notifications/create', 'NotificationController@create')->middleware('auth');
 
 // Subscriptions
+
 Route::get('/subscriptions/checkcoupon/{coupon}/', 'Subscriptions@checkStripeCoupon')->middleware('auth');
-Route::resource('subscriptions', 'Subscriptions')->middleware('auth');
+Route::post('/subscriptions/cancel', 'Subscriptions@cancelSubscription')->middleware('auth');
+Route::post('/subscriptions/restart', 'Subscriptions@restartSubscription')->middleware('auth');
 Route::post('/subscriptions/create', 'Subscriptions@subscribe')->middleware('auth');
+Route::resource('subscriptions', 'Subscriptions')->middleware('auth');
 
 // Documents
 Route::resource('documents', 'DocumentController')->middleware('auth');

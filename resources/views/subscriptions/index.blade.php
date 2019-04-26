@@ -2,8 +2,6 @@
 
 @section('title')
     <title>Markets | Commercial Broker Connection</title>
-
-
 @endsection
 
 @section('content')
@@ -19,25 +17,52 @@
                         <thead>
                         <tr>
                             <th>State</th>
-                            <th>Yearly price</th>
+                            <th>Price</th>
                             <th></th>
+                            <th>End date</th>
                         </tr>
                         </thead>
                         <tbody>
                         @foreach($states as $state)
                             <tr>
                                 <td>{{$state->state}}</td>
-                                <td>{{$state->price}}</td>
+                                <td>{{number_format($state->price, 2, '.', '')}} / yr</td>
                                 <td>
-                                    @if(!$user->isSubscribed($state->id))
+                                    @php ($sub = $user->isSubscribed($state->id))
+                                    @if(!$sub)
                                         <span id="add-{{$state->id}}" class="btn btn-dark"
                                               onclick="addState({{$state->id}}, '{{$state->state}}', {{$state->price}})">Add</span>
                                         <span id="remove-{{$state->id}}" class="btn btn-outline-danger hidden"
                                               onclick="removeState({{$state->id}}, {{$state->price}})">Remove</span>
 
                                     @else
-                                        <span id="add-{{$state->id}}" class="btn btn-sm btn-outline-success disabled">Subscribed</span>
-
+                                        @if($sub->renew)
+                                            <form method="post"
+                                                  action="/subscriptions/cancel"
+                                                  onsubmit="return confirm('Are you sure you want to cancel your ' +
+                                                          'subscription to {{$state->state}}?');">
+                                                @csrf
+                                                <input type="hidden" name="id" value="{{$state->id}}"/>
+                                                <button class="btn btn-sm btn-outline-warning disabled">Pause
+                                                    subscription
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form method="post"
+                                                  action="/subscriptions/restart">
+                                                @csrf
+                                                <input type="hidden" name="id" value="{{$state->id}}"/>
+                                                <button class="btn btn-sm btn-outline-success disabled">Restart
+                                                    subscription
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($sub)
+                                        @php($date = new DateTime($sub->subscription_expire_date))
+                                        {{$date->format('m/d/Y')}}
                                     @endif
                                 </td>
                             </tr>
@@ -146,7 +171,7 @@
         }
 
         function checkCoupon() {
-            let coupon = promoCodeInputField.value
+            let coupon = promoCodeInputField.value;
             if (coupon.length === 0) {
                 resetPromoCode();
             } else {
@@ -285,6 +310,7 @@
             isPromoCodeEnabled = false;
         }
 
+
         /*STRIPE*/
 
         // Create a Stripe client.
@@ -356,6 +382,25 @@
 
             // Submit the form
             form.submit();
+        }
+
+
+        function postData(url = ``, data = {}) {
+            // Default options are marked with *
+            return fetch(url, {
+                method: "POST", // *GET, POST, PUT, DELETE, etc.
+                mode: "cors", // no-cors, cors, *same-origin
+                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                credentials: "same-origin", // include, *same-origin, omit
+                headers: {
+                    "Content-Type": "application/json",
+                    // "Content-Type": "application/x-www-form-urlencoded",
+                },
+                redirect: "follow", // manual, *follow, error
+                referrer: "no-referrer", // no-referrer, *client
+                body: JSON.stringify(data), // body data type must match "Content-Type" header
+            })
+                .then(response => response.json()); // parses JSON response into native Javascript objects
         }
 
     </script>
