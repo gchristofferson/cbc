@@ -365,8 +365,6 @@ class UserController extends Controller
             request()->validate([
                 'first_name' => 'required',
                 'last_name' => 'required',
-                'email' => 'required',
-                'license' => 'required',
             ]);
 
             if (request('avatar') == '') {
@@ -412,11 +410,8 @@ class UserController extends Controller
             $user->update(request([
                 'first_name',
                 'last_name',
-                'email',
-                'license',
                 'company_name',
                 'company_website',
-                'main_market',
                 'phone_number',
                 'admin',
                 'approved',
@@ -426,11 +421,6 @@ class UserController extends Controller
         }
         if ($approve_reject != true) {
             session()->flash('success', 'User Profile Updated!');
-        }
-
-        if ($user->admin == true && $user->approved == 'off') {
-            $user->approved = 'on';
-            $user->save();
         }
 
 
@@ -445,8 +435,7 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        //
-        $logged_user = auth()->user();
+
         if ($user->admin == 'on' || $user->super_admin == 'on') {
             session()->flash('error', "Admins can't be deleted. If you are sure, turn admin off, update, then delete this user");
             return back();
@@ -456,7 +445,7 @@ class UserController extends Controller
             session()->flash('error', "Super Admins can not be deleted");
             return back();
         }
-        $user->delete();
+        $user->deleter();
 
         if (request()->has('delete-btn')) {
             return redirect('rejected/users');

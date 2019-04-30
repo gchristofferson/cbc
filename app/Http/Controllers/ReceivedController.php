@@ -48,11 +48,6 @@ class ReceivedController extends Controller
         }
         $data['user'] = $user;
 
-        if ($user->approved == 'off' ) {
-            session()->flash('error', 'Your account is still pending approval');
-            return redirect('/update-profile');
-        }
-
         abort_if($user->rejected == 'on', 403);
 
         // get received inquiry rows

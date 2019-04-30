@@ -12,7 +12,6 @@ use App\Received;
 
 class ContentsController extends Controller
 {
-    //
     public function login()
     {
         return view('contents/login');
@@ -20,7 +19,7 @@ class ContentsController extends Controller
 
     public function register()
     {
-        return view('contents/register');
+
     }
 
     public function forgot()
@@ -55,21 +54,13 @@ class ContentsController extends Controller
         foreach ($received_inquiry_rows as $row) {
             array_push($received_inquiry_ids, ['inquiry_id' => $row->inquiry_id, 'read' => $row->read]);
         }
-//        return $received_inquiry_ids;
-
 
         $data['received_inquiries'] = Received::userInquiries(auth()->user());
-
-        // get all states
-        $states = State::all()->sortBy('state');
-
 
         // get user subscriptions
         $subscriptions = auth()->user()->subscriptions->sortBy('state_id');
         $data['subscriptions'] = $subscriptions;
 
-
-//        $cart_state = '';
         $msg = '';
         $success_msg = '';
 
@@ -117,12 +108,9 @@ class ContentsController extends Controller
             }
         }
 
-//        return sizeof($cities);
-
         if (sizeof($cities) == 0) {
             $data['cities'][] = "Please add a subscription to your account first";
         }
-//        return $data;
 
         // for each city, push notification to array
         $notifications = [];
@@ -134,20 +122,16 @@ class ContentsController extends Controller
                 }
             }
         }
+
         $data['notifications'] = $notifications;
         $data['msg'] = $msg;
         $data['success_msg'] = $success_msg;
 
-        // flash promo message for expiring subscription
-
-        // sort the array and then get the last items subscription expire date
         $subscriptions_arr = [];
         foreach ($subscriptions as $subscription) {
             array_push($subscriptions_arr, $subscription);
         }
         usort($subscriptions_arr, array("\App\Helpers\SortHelper", "sortByExpire"));
-
-//        return sizeof($subscriptions_arr);
 
         if (sizeof($subscriptions_arr) != 0) {
             $expiring_subscription = $subscriptions_arr[sizeof($subscriptions_arr) - 1];
@@ -189,10 +173,6 @@ class ContentsController extends Controller
         }
         $data['user'] = $user;
 
-        if ($user->approved == 'off') {
-            session()->flash('error', 'Your account is still pending approval');
-            return redirect('/update-profile');
-        }
 
         abort_if($user->rejected == 'on', 403);
 

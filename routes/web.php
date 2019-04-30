@@ -23,8 +23,21 @@
  * DELETE /<directory_name_equals_object>/<object_id> (destroy) //to delete an object
  */
 
-// Home
+use App\Mail\InquireReceived;
+use App\Received;
+use Illuminate\Http\Request;
+use Illuminate\Mail\Mailable;
+
+
 Route::get('/', 'ContentsController@dashboard')->name('dashboard')->middleware('auth');
+Route::get('/tutorial', function (Request $request) {
+    $user = \Auth::user();
+    $data['user'] = $user;
+    $data['first'] = $request->first;
+    $data['received_inquiries'] = Received::userInquiries($user);
+    return view("tutorial.index")->with($data);
+
+})->middleware('auth');
 
 // Users (agents)
 Route::resource('users', 'UserController')->middleware('auth');
@@ -60,7 +73,8 @@ Route::get('/subscriptions/checkcoupon/{coupon}/', 'Subscriptions@checkStripeCou
 Route::post('/subscriptions/cancel', 'Subscriptions@cancelSubscription')->middleware('auth');
 Route::post('/subscriptions/restart', 'Subscriptions@restartSubscription')->middleware('auth');
 Route::post('/subscriptions/create', 'Subscriptions@subscribe')->middleware('auth');
-Route::resource('subscriptions', 'Subscriptions')->middleware('auth');
+Route::post('/create-user', 'Subscriptions@newAccount');
+Route::resource('subscriptions', 'Subscriptions');
 
 // Documents
 Route::resource('documents', 'DocumentController')->middleware('auth');
@@ -99,5 +113,7 @@ Route::get('/storage/attachments/{userid}/{filename}', function ($userid, $filen
 });
 
 Route::get('/home', 'HomeController@index')->name('home')->middleware('auth');
+
+
 
 

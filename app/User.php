@@ -32,6 +32,8 @@ class User extends Authenticatable
         'rejected',
         'admin',
         'notifications',
+        'stripe_customer_id',
+        'is_costumer_source_valid'
     ];
 
     /**
@@ -91,6 +93,16 @@ class User extends Authenticatable
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function deleter()
+    {
+        foreach ($this->inquiries as $in) {
+            $in->deleter();
+        }
+        Subscription::where('user_id', $this->id)->delete();
+        Notification::where('user_id', $this->id)->delete();
+        $this->delete();
     }
 
 }

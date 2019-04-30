@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\State;
 use App\Subscription;
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Stripe\Checkout\Session;
 
 class Subscriptions extends BaseController
 {
@@ -13,12 +17,56 @@ class Subscriptions extends BaseController
 
     public function __construct()
     {
-        $this->middleware('auth');
+
         \Stripe\Stripe::setApiKey($this->stripeKey);
+    }
+
+    public function newAccount(Request $request)
+    {
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'license' => ['required', 'string', 'max:255'],
+            'agree' => ['required', 'string'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'stripeToken' => ['required']
+        ]);
+
+        if ($validator->fails()) {
+            return redirect('/register')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $stripeUser = \Stripe\Customer::create([
+            "email" => $data['email'],
+            "source" => $data['stripeToken'] // obtained with Stripe.js
+        ]);
+
+        $duser = User::create([
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'license' => $data['license'],
+            'agree' => $data['agree'],
+            'email' => $data['email'],
+            'stripe_customer_id' => $stripeUser->id,
+            'is_costumer_source_valid' => true,
+            'password' => Hash::make($data['password']),
+        ]);
+
+        Auth::login($duser);
+
+        return redirect('/tutorial?first=true');
     }
 
     public function index()
     {
+        $user = Auth::user();
+        if ($user->approved != 'on') {
+            session()->flash('error', "Your account is not approved, please wait for an administrator to approve your account.");
+        }
         return view('subscriptions.index', $this->getViewData([
             "states" => State::all()
         ]));
@@ -27,6 +75,10 @@ class Subscriptions extends BaseController
 
     public function store(Request $request)
     {
+        $user = Auth::user();
+        if ($user->approved != 'on') {
+            return redirect('/subscriptions');
+        }
         $statearray = json_decode($request->stateIds);
         try {
             $this->subscribe($statearray, $request->stripeToken, $request["coupon"]);
@@ -37,11 +89,12 @@ class Subscriptions extends BaseController
             session()->flash('error', "Something went wrong, try again");
         } catch (\Stripe\Error\Card $e) {
             session()->flash('error', "Payment method declined, please try again.");
+            $user->is_costumer_source_valid = false;
+            $user->save();
         } catch (\Exception $e) {
             session()->flash('error', "Something went wrong, try again");
         }
         return redirect('/subscriptions');
-        // abort($result);
     }
 
     private function subscribe($stateIds, $stripe_token, $coupon = null)
@@ -69,15 +122,17 @@ class Subscriptions extends BaseController
 //            return 400;
         }
         if ($user->stripe_customer_id === null) return 500;
-
-        $stripe_cus_id = $user->stripe_customer_id;
-
-        \Stripe\Customer::update(
-            $stripe_cus_id,
-            [
-                'source' => $stripe_token
-            ]
-        );
+        if (!$user->is_costumer_source_valid) {
+            $stripe_cus_id = $user->stripe_customer_id;
+            \Stripe\Customer::update(
+                $stripe_cus_id,
+                [
+                    'source' => $stripe_token
+                ]
+            );
+            $user->is_costumer_source_valid = true;
+            $user->save();
+        }
 
         $subscription_data = $this->createStripeSubscription($stripeIds, $user->stripe_customer_id, $coupon);
 
@@ -150,6 +205,7 @@ class Subscriptions extends BaseController
         session()->flash('success', ', Subscription paused, please reactivate before end date to avoid interruptions!.');
         return redirect('/subscriptions');
     }
+
     public function restartSubscription(Request $request)
     {
         $user = Auth::user();
@@ -166,7 +222,6 @@ class Subscriptions extends BaseController
         session()->flash('success', 'Subscription is active');
         return redirect('/subscriptions');
     }
-
 
 
     public function checkStripeCoupon($coupon)

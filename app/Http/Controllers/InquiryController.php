@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Inquiry;
+use App\Mail\InquireReceived;
 use App\Mail\NewInquiry;
 use App\Received;
 use App\Notification;
@@ -12,6 +13,7 @@ use App\Document;
 use App\Sent;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Mockery\Exception;
 use Validator;
 
@@ -38,10 +40,6 @@ class InquiryController extends Controller
         }
         $data['user'] = $user;
 
-        if ($user->approved == 'off') {
-            session()->flash('error', 'Your account is still pending approval');
-            return redirect('/update-profile');
-        }
 
         abort_if($user->rejected == 'on', 403);
 
@@ -56,7 +54,6 @@ class InquiryController extends Controller
             array_push($received_inquiry_ids, ['inquiry_id' => $row->inquiry_id, 'read' => $row->read]);
         }
 //        return $received_inquiry_ids;
-
 
 
         $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
@@ -109,10 +106,6 @@ class InquiryController extends Controller
         }
         $data['user'] = $user;
 
-        if ($user->approved == 'off') {
-            session()->flash('error', 'Your account is still pending approval');
-            return redirect('/update-profile');
-        }
 
         abort_if($user->rejected == 'on', 403);
 
@@ -126,7 +119,6 @@ class InquiryController extends Controller
         foreach ($received_inquiry_rows as $row) {
             array_push($received_inquiry_ids, ['inquiry_id' => $row->inquiry_id, 'read' => $row->read]);
         }
-//        return $received_inquiry_ids;
 
         // for each id, get the corresponding inquiry
         $received_inquiries = [];
@@ -137,7 +129,7 @@ class InquiryController extends Controller
             array_push($received_inquiries, $inquiry);
 
         }
-//        return $received_inquiries;
+
 
         $data['received_inquiries'] = Received::userInquiries(auth()->user()); //  = Received::where('user_id', auth()->user()->id)->get(); // = $received_inquiries;
 
@@ -243,6 +235,10 @@ class InquiryController extends Controller
                     $city_inquiry->read = false;
                     $city_inquiry->save();
                     $notified[$key] = true;
+                    if (env("SENDEMAIL")) {
+                        Mail::to($users_to_notify->email)
+                            ->queue(new InquireReceived(\App\Inquiry::find($inquiry->id)));
+                    }
                 }
             }
         } catch (\Exception $e) {
@@ -287,10 +283,6 @@ class InquiryController extends Controller
         // get the user
         $user = auth()->user();
 
-        if ($user->approved == 'off') {
-            session()->flash('error', 'Your account is still pending approval');
-            return redirect('/update-profile');
-        }
 
         abort_if($user->rejected == 'on', 403);
 
@@ -312,7 +304,6 @@ class InquiryController extends Controller
         }
 
 
-
         // get received inquiries for user
         // check admin role
         if ($user->admim == 'on' || $user->super_admin == 'on') {
@@ -330,7 +321,6 @@ class InquiryController extends Controller
         foreach ($received_inquiry_rows as $row) {
             array_push($received_inquiry_ids, ['inquiry_id' => $row->inquiry_id, 'read' => $row->read]);
         }
-
 
 
         $received = Received::where([
@@ -465,18 +455,18 @@ class InquiryController extends Controller
         //
         // delete attachments
 //        $documents = Document::all()->where('inquiry_id' , $inquiry->id)->delete();
-        $inquiry->documents()->delete();
-
-        // delete all saved and received inquiries
-        $inquiry->received_inquiries()->delete();
-        $inquiry->saved_inquiries()->delete();
-        $inquiry->sent_inquiry()->delete();
-
-        // delete any documents
-        $inquiry->documents()->delete();
+//        $inquiry->documents()->delete();
+//
+//        // delete all saved and received inquiries
+//        $inquiry->received_inquiries()->delete();
+//        $inquiry->saved_inquiries()->delete();
+//        $inquiry->sent_inquiry()->delete();
+//
+//        // delete any documents
+//        $inquiry->documents()->delete();
 
         // delete inquiry
-        $inquiry->delete();
+        $inquiry->deleter();
 
         session()->flash('success', 'Inquiry Deleted');
 

@@ -5,6 +5,8 @@
 @endsection
 
 @section('content')
+    @php($disabled = $user->approved != 'on' ? 'disabled' : '')
+    @php($disabledClass = $user->approved != 'on' ? 'disabled' : '')
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-5 card card-small user-activity mb-4  mt-4">
@@ -110,40 +112,50 @@
                     <form class="form-group" id="payment-form" action="/subscriptions" method="post"
                           enctype="multipart/form-data">
                         @csrf
-                        <input id="stateIds" name="stateIds" type="hidden" value="[]">
-                        <div id="card-element">
-                            <!-- A Stripe Element will be inserted here. -->
-                        </div>
-                        <div class="mt-3">
-                            <div class="input-group mb-3 hidden" id="promoCode">
-                                <div class="input-group-prepend">
-                                    <button onclick="checkCoupon()" class="btn btn-outline-success" type="button">
-                                        Add coupon
-                                    </button>
-                                </div>
+                        <fieldset {{$disabled}}>
 
-                                <input id="coupon" type="text" name="coupon" class="form-control"
-                                       placeholder="Enter a coupon"
-                                       aria-label="Enter a coupon" aria-describedby="basic-addon2">
-
-                                <div class="input-group-append">
-                                    <button onclick="disablePromoCode()" class="btn btn-outline-danger" type="button">
-                                        Remove
-                                    </button>
-                                </div>
-                                <button type="submit" id="subscribe-1" disabled class="btn btn-success disabled">
-                                    Subscribe
-                                </button>
+                            <input id="stateIds" name="stateIds" type="hidden" value="[]">
+                            <button onclick="showstripe(this)"
+                                    class="btn btn-sm btn-secondary   {{!$user->is_costumer_source_valid ? 'hidden' : ''}}">
+                                Update payment method
+                            </button>
+                            <div class="{{$user->is_costumer_source_valid ? 'hidden' : ''}}" id="card-element">
+                                <!-- A Stripe Element will be inserted here. -->
                             </div>
-                            <span id="add-coupon" onclick="enablePromoCode()" class="btn  btn-outline-secondary">
+
+                            <div class="mt-3">
+                                <div class="input-group mb-3 hidden" id="promoCode">
+                                    <div class="input-group-prepend">
+                                        <button onclick="checkCoupon()" class="btn btn-outline-success" type="button">
+                                            Add coupon
+                                        </button>
+                                    </div>
+
+                                    <input id="coupon" type="text" name="coupon" class="form-control"
+                                           placeholder="Enter a coupon"
+                                           aria-label="Enter a coupon" aria-describedby="basic-addon2">
+
+                                    <div class="input-group-append">
+                                        <button onclick="disablePromoCode()" class="btn btn-outline-danger"
+                                                type="button">
+                                            Remove
+                                        </button>
+                                    </div>
+                                    <button {{}} type="submit" id="subscribe-1" disabled
+                                            class="btn btn-success disabled">
+                                        Subscribe
+                                    </button>
+                                </div>
+                                <span id="add-coupon" onclick="enablePromoCode()" class="btn  btn-outline-secondary">
                             Add promo code
                         </span>
-                            <button type="submit" id="subscribe" disabled class="btn btn-success disabled">Subscribe
-                            </button>
-                            <!-- Used to display form errors. -->
-                            <div id="card-errors" role="alert"></div>
-                            <div id="messages" role="alert"></div>
-                        </div>
+                                <button type="submit" id="subscribe" disabled class="btn btn-success disabled">Subscribe
+                                </button>
+                                <!-- Used to display form errors. -->
+                                <div id="card-errors" role="alert"></div>
+                                <div id="messages" role="alert"></div>
+                            </div>
+                        </fieldset>
                     </form>
                     <script src="https://js.stripe.com/v3/"></script>
                 </div>
@@ -168,6 +180,11 @@
 
         function getStateId(id) {
             return 'state-' + id;
+        }
+
+        function showstripe(el) {
+            document.getElementById("card-element").classList.remove("hidden");
+            el.classList.add("hidden");
         }
 
         function checkCoupon() {
@@ -384,24 +401,6 @@
             form.submit();
         }
 
-
-        function postData(url = ``, data = {}) {
-            // Default options are marked with *
-            return fetch(url, {
-                method: "POST", // *GET, POST, PUT, DELETE, etc.
-                mode: "cors", // no-cors, cors, *same-origin
-                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-                credentials: "same-origin", // include, *same-origin, omit
-                headers: {
-                    "Content-Type": "application/json",
-                    // "Content-Type": "application/x-www-form-urlencoded",
-                },
-                redirect: "follow", // manual, *follow, error
-                referrer: "no-referrer", // no-referrer, *client
-                body: JSON.stringify(data), // body data type must match "Content-Type" header
-            })
-                .then(response => response.json()); // parses JSON response into native Javascript objects
-        }
 
     </script>
 @endsection

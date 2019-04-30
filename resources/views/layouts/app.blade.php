@@ -81,7 +81,13 @@
                     <li class="nav-item">
                         <a class="nav-link " href="/subscriptions">
                             <i class="material-icons">business</i>
-                            <span>Subscriptions</span>
+                            <span>Markets</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="/tutorial">
+                            <i class="material-icons">contact_support</i>
+                            <span>How to</span>
                         </a>
                     </li>
                     @if($user->admin == 'on' || $user->super_admin == 'on')
@@ -105,15 +111,17 @@
             <div class="main-navbar sticky-top bg-white">
                 <!-- Main Navbar -->
                 <nav class="navbar align-items-stretch navbar-light flex-md-nowrap p-0">
-                    <form id="js-search-form" class="main-navbar__search w-100 d-none d-md-flex d-lg-flex">
-                        <div class="input-group input-group-seamless ml-3">
-                            <div class="input-group-prepend">
-                                <div class="input-group-text">
-                                    <i class="fas fa-search"></i>
-                                </div>
-                            </div>
-                            <input id="js-search-input" class="navbar-search form-control" type="text" placeholder="Search Inquiries..." aria-label="Search"> </div>
-                    </form>
+                    <div class="main-navbar__search w-100 d-none d-md-flex d-lg-flex"></div>
+                    {{--<form id="js-search-form" class="main-navbar__search w-100 d-none d-md-flex d-lg-flex">--}}
+                        {{--<div class="input-group input-group-seamless ml-3">--}}
+                            {{--<div class="input-group-prepend">--}}
+                                {{--<div class="input-group-text">--}}
+                                    {{--<i class="fas fa-search"></i>--}}
+                                {{--</div>--}}
+                            {{--</div>--}}
+                            {{--<input id="js-search-input" class="navbar-search form-control" type="text" placeholder="Search Inquiries..." aria-label="Search"> </div>--}}
+                    {{--</form>--}}
+
                     <ul class="navbar-nav border-left flex-row ">
                         <li class="nav-item border-right dropdown notifications">
                             <a class="nav-link nav-link-icon text-center vertical-center" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
